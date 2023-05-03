@@ -1,20 +1,20 @@
-import React, { Children } from "react";
 import PropTypes from "prop-types";
-import ResizeObserver from "resize-observer-polyfill";
+import React, { Children } from "react";
 import Only from "react-only-when";
-import Track from "./Track";
-import Arrow from "./Arrow";
+import ResizeObserver from "resize-observer-polyfill";
+import { nextItemAction, prevItemAction } from "../actions/itemsActions";
 import consts from "../consts";
 import { activeIndexReducer } from "../reducers/items";
-import { nextItemAction, prevItemAction } from "../actions/itemsActions";
-import {
-  SliderContainer,
-  Slider,
-  StyledCarousel,
-  CarouselWrapper
-} from "./styled";
-import { pipe, noop, cssPrefix, numberToArray } from "../utils/helpers";
+import { cssPrefix, noop, numberToArray, pipe } from "../utils/helpers";
+import Arrow from "./Arrow";
 import { Pagination } from "./Pagination";
+import Track from "./Track";
+import {
+  CarouselWrapper,
+  Slider,
+  SliderContainer,
+  StyledCarousel
+} from "./styled";
 
 class Carousel extends React.Component {
   isComponentMounted = false;
@@ -29,7 +29,8 @@ class Carousel extends React.Component {
     activeIndex: this.props.initialActiveIndex || this.props.initialFirstItem, // support deprecated  initialFirstItem
     pages: [],
     activePage: 0,
-    sliderContainerWidth: 0
+    sliderContainerWidth: 0,
+    numberOfSlides: 0
   };
 
   componentDidMount() {
@@ -37,6 +38,10 @@ class Carousel extends React.Component {
     this.initResizeObserver();
     this.updateActivePage();
     this.setPages();
+
+    this.setState({
+      numberOfSlides: Children.toArray(this.props.children).length
+    });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -494,7 +499,7 @@ class Carousel extends React.Component {
     // 3. vertical mode - swipe up or down
 
     const { absX, absY, dir } = data;
-    const { childHeight, activeIndex } = this.state;
+    const { childHeight, activeIndex, numberOfSlides } = this.state;
     const {
       verticalMode,
       isRTL,
@@ -580,11 +585,18 @@ class Carousel extends React.Component {
           // normal behavior
           if (swipedLeft) {
             // func = this.onNextStart;
-            func = () => this.goTo(forwardSlideTtoGo);
+            func = () =>
+              this.goTo(
+                forwardSlideTtoGo === numberOfSlides ? 0 : forwardSlideTtoGo
+              );
           }
           if (swipedRight) {
             // func = this.onPrevStart;
-            func = () => this.goTo(backSlidesToGo);
+            console.log(backSlidesToGo);
+            func = () =>
+              this.goTo(
+                backSlidesToGo === -1 ? numberOfSlides : backSlidesToGo
+              );
           }
         }
       }
